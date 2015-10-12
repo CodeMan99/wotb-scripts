@@ -2,17 +2,31 @@
   "name": "wotb-scripts",
   "version": "1.0.0",
   "description": "Example scripts using the wotblitz.js API wrapper.",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "bin": {
+    "average-tier": "./average-tier",
+    "frags": "./frags",
+    "in-garage": "./in-garage",
+    "recently-played": "./recently-played",
+    "sold-tanks": "./sold-tanks"
   },
   "keywords": [
+    "tank",
+    "tanks",
+    "wargaming",
+    "wargaming.net",
+    "wot",
+    "wotb",
     "wotblitz"
   ],
   "author": "Cody A. Taylor <codemister99@yahoo.com>",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CodeMan99/wotb-scripts.git"
+  },
   "dependencies": {
     "async": "^1.4.2",
-    "commander": "^2.8.1"
+    "commander": "^2.8.1",
+    "wotblitz": "^0.1.0"
   }
 }

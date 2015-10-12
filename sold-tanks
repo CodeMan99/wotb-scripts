@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 var async = require('async')
-  , wotb = require('../wotblitz')
+  , wotb = require('wotblitz')
 
 async.auto({
   sess: wotb.session.load,

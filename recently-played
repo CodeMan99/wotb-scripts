@@ -7,7 +7,7 @@ var async = require('async')
   , program = require('commander')
   , Stream = require('stream').Transform
   , url = require('url')
-  , wotb = require('../wotblitz')
+  , wotb = require('wotblitz')
 
 program
   .option('-c, --count <number>', 'number of recent vehicles to return [default: 5]', Number, 5)

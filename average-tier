@@ -2,7 +2,7 @@
 
 var async = require('async')
   , program = require('commander')
-  , wotb = require('../wotblitz')
+  , wotb = require('wotblitz')
 
 program
   .option('-a, --account <account_id>', 'blitz account_id to calculate; otherwise uses the session value', Number)

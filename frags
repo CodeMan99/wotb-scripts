@@ -2,7 +2,7 @@
 
 var async = require('async')
   , program = require('commander')
-  , wotb = require('../wotblitz')
+  , wotb = require('wotblitz')
 
 program
   .option('-c, --count <number>', 'number of vehicles to return', Number, 5)
