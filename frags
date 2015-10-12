@@ -28,6 +28,7 @@ async.auto({
     switch (program.mode) {
     case 'most':
       ret = Object.keys(frags).filter(tierFilter).sort((a, b) => frags[b] - frags[a])
+      break
     case 'least':
       ret = Object.keys(frags).filter(tierFilter).sort((a, b) => frags[a] - frags[b])
       break
