@@ -1,0 +1,54 @@
+#!/usr/bin/env node
+
+var async = require('async')
+  , program = require('commander')
+  , wotb = require('../wotblitz')
+
+program
+  .option('-a, --account <account_id>', 'blitz account_id to calculate; otherwise uses the session value', Number)
+  .option('-p, --only-premium', 'calculate only the player\'s premium tanks')
+  .option('-r, --only-regular', 'calculate only the player\'s regular tanks')
+  .parse(process.argv)
+
+if (program.onlyPremium && program.onlyRegular) {
+  console.error()
+  console.error("  `--only-premium' and `--only-regular' are mutually exclusive options")
+  console.error()
+  process.exit(1)
+}
+
+async.auto({
+  sess: wotb.session.load,
+  all: (callback, d) => wotb.tankopedia.vehicles([], [], ['is_premium', 'tier'], callback),
+  login: ['sess', (callback, d) => {
+    if (program.account || d.sess.isLoggedIn()) return callback(null)
+    wotb.auth.login(8000, d.sess, callback)
+  }],
+  stats: ['login', (callback, d) =>
+    wotb.tankStats.stats(program.account, [], null, ['all.battles', 'tank_id'], d.sess, callback)
+  ]
+}, (err, d) => {
+  if (err) throw err
+
+  var battles = d.stats[program.account || d.sess.account_id]
+      .map(t => ({
+        battles: t.all.battles,
+        is_premium: d.all[t.tank_id].is_premium,
+        tier: d.all[t.tank_id].tier
+      }))
+      .filter(b => {
+        if (program.onlyPremium) return b.is_premium
+        if (program.onlyRegular) return !b.is_premium
+        return true
+      })
+      .reduce((memo, val) => {
+        if (!memo[val.tier]) memo[val.tier] = 0
+        memo[val.tier] += val.battles
+        return memo
+      }, {})
+    , numerator = Object.keys(battles).reduce((memo, tier) => { memo += tier * battles[tier]; return memo }, 0)
+    , denominator = Object.keys(battles).reduce((memo, tier) => { memo += battles[tier]; return memo }, 0)
+    , average = numerator / denominator
+
+  console.log('Average tier: ' + average.toFixed(2))
+})
