@@ -1,0 +1,18 @@
+{
+  "name": "wotb-scripts",
+  "version": "1.0.0",
+  "description": "Example scripts using the wotblitz.js API wrapper.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "wotblitz"
+  ],
+  "author": "Cody A. Taylor <codemister99@yahoo.com>",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^1.4.2",
+    "commander": "^2.8.1"
+  }
+}
