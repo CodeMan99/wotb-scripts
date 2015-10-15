@@ -10,18 +10,36 @@ var async = require('async')
   , wotb = require('wotblitz')
 
 program
+  .option('-u, --username <name>', 'attempts to return average-tier based on username', s => s.toLowerCase())
+  .option('-a, --account <account_id>', 'blitz account_id to calculate; otherwise uses the session value', Number)
   .option('-c, --count <number>', 'number of recent vehicles to return [default: 5]', Number, 5)
   .option('-s, --save-images <directory>', 'save images to the given directory', directoryType)
   .parse(process.argv)
 
 async.auto({
   sess: wotb.session.load,
-  login: ['sess', (callback, d) => d.sess.isLoggedIn() ? callback(null) : wotb.auth.login(8000, d.sess, callback)],
-  stats: ['login', (callback, d) =>
-    wotb.tankStats.stats(null, [], 1, ['last_battle_time', 'tank_id'], d.sess, callback)
+  usernames: (callback, d) => program.username ? wotb.players.list(program.username, null, callback) : callback(null),
+  account_id: ['sess', 'usernames', (callback, d) => {
+    if (program.account)
+      callback(null, program.account)
+    else if (d.usernames) {
+      if (d.usernames.length === 1) return callback(null, d.usernames[0].account_id)
+
+      var player = d.usernames.find(p => p.nickname.toLowerCase() === program.username)
+      if (player) return callback(null, player.account_id)
+
+      callback(new Error('No account found for "' + program.username + '"'))
+    }
+    else if (d.sess.account_id)
+      callback(null, d.sess.account_id)
+    else
+      callback(new Error('Cannot find account_id'))
+  }],
+  stats: ['account_id', (callback, d) =>
+    wotb.tankStats.stats(d.account_id, [], null, ['last_battle_time', 'tank_id'], null, callback)
   ],
   recent: ['stats', (callback, d) =>
-    callback(null, d.stats[d.sess.account_id]
+    callback(null, d.stats[d.account_id]
       .sort((a, b) => b.last_battle_time - a.last_battle_time)
       .slice(0, program.count)
     )
