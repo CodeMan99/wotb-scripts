@@ -18,8 +18,7 @@ async.auto({
   var arr = Object.keys(d.garage)
     .map(key => ({
       cost: d.garage[key].cost.price_gold * 400 + d.garage[key].cost.price_credit,
-      name: d.garage[key].name,
-      tank_id: key
+      name: d.garage[key].name
     }))
     .sort((a, b) => a.cost - b.cost)
 

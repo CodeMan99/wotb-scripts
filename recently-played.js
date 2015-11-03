@@ -57,8 +57,7 @@ async.auto({
   var vehicles = d.recent.map(r => ({
     image: d.vehicles[r.tank_id].images.preview,
     last_battle_time: new Date(r.last_battle_time * 1000),
-    name: d.vehicles[r.tank_id].name,
-    tank_id: r.tank_id
+    name: d.vehicles[r.tank_id].name
   }))
 
   if (process.stdout.isTTY)
