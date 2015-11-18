@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "description": "Example scripts using the wotblitz.js API wrapper.",
   "bin": {
-    "average-tier": "./average-tier",
-    "frags": "./frags",
-    "in-garage": "./in-garage",
-    "recently-played": "./recently-played",
-    "sold-tanks": "./sold-tanks"
+    "average-tier": "./average-tier.js",
+    "frags": "./frags.js",
+    "in-garage": "./in-garage.js",
+    "period": "./period.js",
+    "recently-played": "./recently-played.js",
+    "sold-tanks": "./sold-tanks.js",
+    "tank-frags": "./tank-frags.js",
+    "wr": "./wr.js"
   },
   "keywords": [
     "tank",
