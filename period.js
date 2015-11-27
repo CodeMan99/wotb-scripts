@@ -44,7 +44,7 @@ async.auto({
     d.sess.save(cb)
   }],
   newStats: ['account_id', (cb, d) => wotb.tankStats.stats(
-    d.account_id, [], null,
+    Number(d.account_id), [], null,
     ['all.battles', 'all.losses', 'all.wins', 'last_battle_time', 'tank_id'],
     null, cb
   )],

@@ -39,7 +39,7 @@ async.auto({
       callback(new Error('Cannot find account_id'))
   }],
   stats: ['account_id', (callback, d) =>
-    wotb.tankStats.stats(d.account_id, [], null, ['all.battles', 'tank_id'], null, callback)
+    wotb.tankStats.stats(Number(d.account_id), [], null, ['all.battles', 'tank_id'], null, callback)
   ]
 }, (err, d) => {
   if (err) throw err

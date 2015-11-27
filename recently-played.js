@@ -36,7 +36,7 @@ async.auto({
       callback(new Error('Cannot find account_id'))
   }],
   stats: ['account_id', (callback, d) =>
-    wotb.tankStats.stats(d.account_id, [], null, ['last_battle_time', 'tank_id'], null, callback)
+    wotb.tankStats.stats(Number(d.account_id), [], null, ['last_battle_time', 'tank_id'], null, callback)
   ],
   recent: ['stats', (callback, d) =>
     callback(null, d.stats[d.account_id]

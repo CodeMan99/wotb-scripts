@@ -55,7 +55,11 @@ async.auto({
       cb(new Error('Cannot find account_id'))
   }],
   stats: ['account_id', (cb, d) =>
-    wotb.tankStats.stats(d.account_id, [], null, ['all.battles', 'all.losses', 'all.wins', 'tank_id'], null, cb)
+    wotb.tankStats.stats(
+      Number(d.account_id), [], null,
+      ['all.battles', 'all.losses', 'all.wins', 'tank_id'],
+      null, cb
+    )
   ]
 }, (err, d) => {
   if (err) throw err
