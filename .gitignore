@@ -31,3 +31,6 @@ node_modules
 
 # Created by period.js
 wotblitz-period.json
+
+# A personal script that I do not want to make public
+goals.sh
