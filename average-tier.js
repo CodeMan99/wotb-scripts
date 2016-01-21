@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 var async = require('async')
+  , missing = require('./missing.js')
   , program = require('commander')
   , wotb = require('wotblitz')
 
@@ -20,7 +21,8 @@ if (program.onlyPremium && program.onlyRegular) {
 
 async.auto({
   sess: wotb.session.load,
-  all: (callback, d) => wotb.tankopedia.vehicles([], [], ['is_premium', 'tier'], callback),
+  vehicles: (callback, d) => wotb.tankopedia.vehicles([], [], ['is_premium', 'tier'], callback),
+  all: ['vehicles', (callback, d) => missing(d.vehicles, ['is_premium', 'tier'], callback),
   usernames: (callback, d) => program.username ? wotb.players.list(program.username, null, callback) : callback(null),
   account_id: ['sess', 'usernames', (callback, d) => {
     if (program.account)

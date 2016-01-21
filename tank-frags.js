@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 
 var async = require('async')
+  , missing = require('./missing.js')
   , wotb = require('wotblitz')
 
 async.auto({
   sess: wotb.session.load,
-  all: (callback, d) => wotb.tankopedia.vehicles([], [], ['name', 'nation', 'tier'], callback),
+  vehicles: (callback, d) => wotb.tankopedia.vehicles([], [], ['name', 'nation', 'tier'], callback),
+  all: ['vehicles', (callback, d) => missing(d.vehicles, ['name', 'nation', 'tier'], callback)],
   login: ['sess', (callback, d) => d.sess.isLoggedIn() ? callback(null) : wotb.auth.login(8000, d.sess, callback)],
   stats: ['sess', 'login', (callback, d) =>
     wotb.tankStats.stats(null, [], null, ['frags', 'tank_id'], d.sess, callback)

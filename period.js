@@ -2,6 +2,7 @@
 
 var async = require('async')
   , fs = require('fs')
+  , missing = require('./missing.js')
   , path = require('path')
   , program = require('commander')
   , wotb = require('wotblitz')
@@ -17,38 +18,8 @@ program
 program.start = program.start || !!program.username || !!program.account
 
 async.auto({
-  // 64849 not in d.vehicles
-  // 55073 not in d.vehicles
-  vehicles: (cb, d) => {
-    wotb.tankopedia.vehicles(null, [], ['name', 'nation', 'tier', 'type'], (err, v) => {
-      if (err) return cb(err)
-      v['55073'] = {
-        name: 'T7 Combat Car',
-        nation: 'usa',
-        tier: 2,
-        type: 'lightTank'
-      }
-      v['64849'] = {
-        name: 'Sentinel AC-1',
-        nation: 'uk',
-        tier: 4,
-        type: 'mediumTank'
-      }
-      v['54353'] = {
-        name: 'Excelsior',
-        nation: 'uk',
-        tier: 5,
-        type: 'heavyTank'
-      }
-      v['63841'] = {
-        name: 'Panzer IV Anko Special',
-        nation: 'japan',
-        tier: 5,
-        type: 'mediumTank'
-      }
-      cb(null, v)
-    })
-  },
+  rvehicles: (cb, d) => wotb.tankopedia.vehicles(null, [], ['name', 'nation', 'tier', 'type'], cb),
+  vehicles: ['rvehicles', (cb, d) => missing(d.rvehicles, ['name', 'nation', 'tier', 'type'], cb)],
   read: (cb, d) => program.start ? cb(null, '{}') : fs.readFile(file, {encoding: 'utf8'}, cb),
   oldStats: ['read', (cb, d) => cb(null, JSON.parse(d.read))],
   sess: wotb.session.load,
