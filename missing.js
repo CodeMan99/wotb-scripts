@@ -2,34 +2,15 @@ module.exports = addMissingVehicles;
 
 function addMissingVehicles(current, fields, callback) {
   var missing = {
-    '55073': {
-      is_premium: true,
-      name: 'T7 Combat Car',
-      nation: 'usa',
-      tier: 2,
-      type: 'lightTank'
-    },
-    '64849': {
-      is_premium: true,
-      name: 'Sentinel AC-1',
-      nation: 'uk',
-      tier: 4,
-      type: 'mediumTank'
-    },
-    '54353': {
-      is_premium: true,
-      name: 'Excelsior',
-      nation: 'uk',
-      tier: 5,
-      type: 'heavyTank'
-    },
-    '63841': {
-      is_premium: true,
-      name: 'Panzer IV Anko Special',
-      nation: 'japan',
-      tier: 5,
-      type: 'mediumTank'
-    }
+  // Example of a missing vehicle, include at least these fields:
+  /* '55073': {
+   *   is_premium: true,
+   *   name: 'T7 Combat Car',
+   *   nation: 'usa',
+   *   tier: 2,
+   *   type: 'lightTank'
+   * },
+   */
   }
 
   for (var k in missing) {
