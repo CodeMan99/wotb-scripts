@@ -22,7 +22,7 @@ if (program.onlyPremium && program.onlyRegular) {
 async.auto({
   sess: wotb.session.load,
   vehicles: (callback, d) => wotb.tankopedia.vehicles([], [], ['is_premium', 'tier'], callback),
-  all: ['vehicles', (callback, d) => missing(d.vehicles, ['is_premium', 'tier'], callback),
+  all: ['vehicles', (callback, d) => missing(d.vehicles, ['is_premium', 'tier'], callback)],
   usernames: (callback, d) => program.username ? wotb.players.list(program.username, null, callback) : callback(null),
   account_id: ['sess', 'usernames', (callback, d) => {
     if (program.account)
