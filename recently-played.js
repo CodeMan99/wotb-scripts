@@ -69,11 +69,11 @@ async.auto({
 function image(directory, vehicle, callback) {
   var imgUrl = vehicle.images.preview
     , filepath = path.join(directory,
-      url.parse(imgUrl)
-        .pathname
-        .split('/')
-        .slice(-1)[0]
-    )
+        url.parse(imgUrl)
+          .pathname
+          .split('/')
+          .slice(-1)[0]
+      )
 
   http.get(imgUrl, response => {
     var data = new Stream()
