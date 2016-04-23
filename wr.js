@@ -160,7 +160,7 @@ function vehicleType(val, memo) {
     memo.push('AT-SPG')
     break
   default:
-    throw new Error('Unkown vehicle type')
+    throw new Error('Unknown vehicle type')
   }
 
   return memo
