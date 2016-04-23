@@ -28,8 +28,8 @@
     "url": "git+https://github.com/CodeMan99/wotb-scripts.git"
   },
   "dependencies": {
-    "async": "^1.4.2",
-    "commander": "^2.8.1",
-    "wotblitz": "^0.1.0"
+    "async": "^1.5.2",
+    "commander": "^2.9.0",
+    "wotblitz": "^0.1.3"
   }
 }
