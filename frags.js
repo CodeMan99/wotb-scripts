@@ -18,10 +18,10 @@ program
 
 async.auto({
   sess: wotb.session.load,
-  vehicles: (callback, d) => wotb.tankopedia.vehicles([], [], ['tier'], callback),
-  all: ['vehicles', (callback, d) => missing(d.vehicles, ['tier'], callback)],
+  _all: callback => wotb.tankopedia.vehicles([], [], ['tier'], callback),
+  all: ['_all', (callback, d) => missing(d._all, ['tier'], callback)],
   login: ['sess', (callback, d) => d.sess.isLoggedIn() ? callback(null) : wotb.auth.login(8000, d.sess, callback)],
-  stats: ['login', (callback, d) => wotb.players.info(null, ['statistics.frags'], d.sess, callback)],
+  stats: ['login', (callback, d) => wotb.players.info(null, [], ['statistics.frags'], d.sess, callback)],
   frags: ['all', 'stats', (callback, d) => {
     var frags = d.stats[d.sess.account_id].statistics.frags
       , tierFilter = id => program.tiers.length === 0 || program.tiers.indexOf(d.all[id].tier) > -1
