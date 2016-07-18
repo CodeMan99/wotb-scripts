@@ -37,10 +37,7 @@ async.auto({
 
     async.map(chunked, vehiclesPartial, (err, chunkedData) => {
       if (err) return callback(err)
-      callback(null, chunkedData.reduce((m, c) => {
-        Object.keys(c).forEach(k => m[k] = c[k])
-        return m
-      }, {}))
+      callback(null, Object.assign.apply(null, chunkedData))
     })
   }]
 }, (err, d) => {
