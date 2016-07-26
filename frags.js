@@ -44,9 +44,21 @@ async.auto({
       ret.slice(0, program.count).map(id => ({tank_id: id, frags: frags[id] || 0}))
     )
   }],
-  vehicles: ['frags', (callback, d) =>
-    wotb.tankopedia.vehicles(d.frags.map(f => f.tank_id), [], ['nation', 'name', 'tier'], callback)
-  ]
+  _missing: callback => missing({}, ['nation', 'name', 'tier'], callback),
+  vehicles: ['frags', '_missing', (callback, d) => {
+    var tankIds = d.frags.map(f => f.tank_id)
+
+    // remove missing tanks if they are not in the "d.frags" array
+    Object.keys(d._missing).forEach(id => {
+      if (tankIds.indexOf(id) === -1) delete d._missing[id]
+    })
+
+    wotb.tankopedia.vehicles(tankIds, [], ['nation', 'name', 'tier'], (err, tanks) => {
+      if (err) return callback(err)
+
+      callback(null, Object.assign(tanks, d._missing))
+    })
+  }]
 }, (err, d) => {
   if (err) throw err
 
