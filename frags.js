@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 var async = require('async')
-  , missing = require('./missing.js')
+  , missing = async.asyncify(require('./missing.js'))
   , program = require('commander')
   , wotb = require('wotblitz')
 

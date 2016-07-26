@@ -2,7 +2,7 @@
 
 var async = require('async')
   , fs = require('fs')
-  , missing = require('./missing.js')
+  , missing = async.asyncify(require('./missing.js'))
   , path = require('path')
   , program = require('commander')
   , wotb = require('wotblitz')
@@ -21,7 +21,7 @@ async.auto({
   rvehicles: (cb, d) => wotb.tankopedia.vehicles(null, [], ['name', 'nation', 'tier', 'type'], cb),
   vehicles: ['rvehicles', (cb, d) => missing(d.rvehicles, ['name', 'nation', 'tier', 'type'], cb)],
   read: (cb, d) => program.start ? cb(null, '{}') : fs.readFile(file, {encoding: 'utf8'}, cb),
-  oldStats: ['read', (cb, d) => cb(null, JSON.parse(d.read))],
+  oldStats: ['read', (cb, d) => async.asyncify(JSON.parse)(d.read, cb)],
   sess: wotb.session.load,
   usernames: (cb, d) => program.username ? wotb.players.list(program.username, null, cb) : cb(null),
   account_id: ['sess', 'usernames', (cb, d) => {

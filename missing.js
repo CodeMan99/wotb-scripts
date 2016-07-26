@@ -1,23 +1,22 @@
 module.exports = addMissingVehicles;
 
-function addMissingVehicles(current, fields, callback) {
-  var missing = {
-  // Example of a missing vehicle, include at least these fields:
-  /* '55073': {
-   *   is_premium: true,
-   *   name: 'T7 Combat Car',
-   *   nation: 'usa',
-   *   tier: 2,
-   *   type: 'lightTank'
-   * },
-   */
-  }
+var missing = {
+  '55889': {
+    is_premium: true,
+    tier: 6,
+    type: 'mediumTank',
+    name: 'Cromwell B',
+    nation: 'uk',
+  },
+}
 
+function addMissingVehicles(current, fields, filter) {
   for (var k in missing) {
-    if (k in current) return callback(new Error('Vehicle key "' + k + '" exists in current'))
+    if (k in current) throw new Error('Vehicle key "' + k + '" exists in current')
+    if (filter && Object.keys(filter).find(f => filter[f].indexOf(missing[k][f]) === -1)) continue
     current[k] = {}
     fields.forEach(f => current[k][f] = missing[k][f])
   }
 
-  callback(null, current)
+  return current
 }
