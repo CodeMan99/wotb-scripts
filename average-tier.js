@@ -19,27 +19,28 @@ if (program.onlyPremium && program.onlyRegular) {
   process.exit(1)
 }
 
+var getAccountId = async.asyncify((sess, usernames) => {
+  if (program.account)
+    return program.account
+  else if (usernames) {
+    if (usernames.length === 1) return usernames[0].account_id
+
+    var player = usernames.find(p => p.nickname.toLowerCase() === program.username)
+    if (player) return player.account_id
+
+    throw new Error('No account found for "' + program.username + '"')
+  } else if (sess.account_id)
+    return sess.account_id
+  else
+    throw new Error('Cannot find account_id')
+})
+
 async.auto({
   sess: wotb.session.load,
   vehicles: (callback, d) => wotb.tankopedia.vehicles([], [], ['is_premium', 'tier'], callback),
   all: ['vehicles', (callback, d) => missing(d.vehicles, ['is_premium', 'tier'], callback)],
   usernames: (callback, d) => program.username ? wotb.players.list(program.username, null, callback) : callback(null),
-  account_id: ['sess', 'usernames', (callback, d) => {
-    if (program.account)
-      callback(null, program.account)
-    else if (d.usernames) {
-      if (d.usernames.length === 1) return callback(null, d.usernames[0].account_id)
-
-      var player = d.usernames.find(p => p.nickname.toLowerCase() === program.username)
-      if (player) return callback(null, player.account_id)
-
-      callback(new Error('No account found for "' + program.username + '"'))
-    }
-    else if (d.sess.account_id)
-      callback(null, d.sess.account_id)
-    else
-      callback(new Error('Cannot find account_id'))
-  }],
+  account_id: ['sess', 'usernames', (callback, d) => getAccountId(d.sess, d.usernames, callback)],
   stats: ['account_id', (callback, d) =>
     wotb.tankStats.stats(Number(d.account_id), [], null, ['all.battles', 'tank_id'], null, callback)
   ]
@@ -66,5 +67,5 @@ async.auto({
     , denominator = Object.keys(battles).reduce((memo, tier) => { memo += battles[tier]; return memo }, 0)
     , average = numerator / denominator
 
-  console.log('Average tier: ' + average.toFixed(2))
+  console.log('Average tier: ' + average.toFixed(4))
 })

@@ -16,25 +16,26 @@ program
   .option('-s, --save-images <directory>', 'save images to the given directory', directoryType)
   .parse(process.argv)
 
+var getAccountId = async.asyncify((sess, usernames) => {
+  if (program.account)
+    return program.account
+  else if (usernames) {
+    if (usernames.length === 1) return usernames[0].account_id
+
+    var player = usernames.find(p => p.nickname.toLowerCase() === program.username)
+    if (player) return player.account_id
+
+    throw new Error('No account found for "' + program.username + '"')
+  } else if (sess.account_id)
+    return sess.account_id
+  else
+    throw new Error('Cannot find account_id')
+})
+
 async.auto({
   sess: wotb.session.load,
   usernames: (callback, d) => program.username ? wotb.players.list(program.username, null, callback) : callback(null),
-  account_id: ['sess', 'usernames', (callback, d) => {
-    if (program.account)
-      callback(null, program.account)
-    else if (d.usernames) {
-      if (d.usernames.length === 1) return callback(null, d.usernames[0].account_id)
-
-      var player = d.usernames.find(p => p.nickname.toLowerCase() === program.username)
-      if (player) return callback(null, player.account_id)
-
-      callback(new Error('No account found for "' + program.username + '"'))
-    }
-    else if (d.sess.account_id)
-      callback(null, d.sess.account_id)
-    else
-      callback(new Error('Cannot find account_id'))
-  }],
+  account_id: ['sess', 'usernames', (callback, d) => getAccountId(d.sess, d.usernames, callback)],
   stats: ['account_id', (callback, d) =>
     wotb.tankStats.stats(Number(d.account_id), [], null, ['last_battle_time', 'tank_id'], null, callback)
   ],

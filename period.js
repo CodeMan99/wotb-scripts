@@ -17,6 +17,22 @@ program
 
 program.start = program.start || !!program.username || !!program.account
 
+var getAccountId = async.asyncify((sess, usernames) => {
+  if (program.account)
+    return program.account
+  else if (usernames) {
+    if (usernames.length === 1) return usernames[0].account_id
+
+    var player = usernames.find(p => p.nickname.toLowerCase() === program.username)
+    if (player) return player.account_id
+
+    throw new Error('No account found for "' + program.username + '"')
+  } else if (sess.account_id)
+    return sess.account_id
+  else
+    throw new Error('Cannot find account_id')
+})
+
 async.auto({
   rvehicles: (cb, d) => wotb.tankopedia.vehicles(null, [], ['name', 'nation', 'tier', 'type'], cb),
   vehicles: ['rvehicles', (cb, d) => missing(d.rvehicles, ['name', 'nation', 'tier', 'type'], cb)],
@@ -24,22 +40,7 @@ async.auto({
   oldStats: ['read', (cb, d) => async.asyncify(JSON.parse)(d.read, cb)],
   sess: wotb.session.load,
   usernames: (cb, d) => program.username ? wotb.players.list(program.username, null, cb) : cb(null),
-  account_id: ['sess', 'usernames', (cb, d) => {
-    if (program.account)
-      cb(null, program.account)
-    else if (d.usernames) {
-      if (d.usernames.length === 1) return cb(null, d.usernames[0].account_id)
-
-      var player = d.usernames.find(p => p.nickname.toLowerCase() === program.username)
-      if (player) return cb(null, player.account_id)
-
-      cb(new Error('No account found for "' + program.username + '"'))
-    }
-    else if (d.sess.account_id)
-      cb(null, d.sess.account_id)
-    else
-      cb(new Error('Cannot find account_id'))
-  }],
+  account_id: ['sess', 'usernames', (cb, d) => getAccountId(d.sess, d.usernames, cb)],
   updateSession: ['account_id', 'sess', (cb, d) => {
     if (!program.username && !program.account) return cb(null)
     d.sess.account_id = d.account_id
