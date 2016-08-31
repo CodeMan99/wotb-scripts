@@ -1,7 +1,7 @@
 Wotb Scripts
 ============
 
-Examples using [wotblitz.js]() as a dependancy.
+Examples using [wotblitz.js](//github.com/CodeMan99/wotblitz.js) as a dependancy.
 
 Installing
 ----------
