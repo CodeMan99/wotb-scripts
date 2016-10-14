@@ -30,6 +30,7 @@
   "dependencies": {
     "async": "^1.5.2",
     "commander": "^2.9.0",
+    "concat-stream": "^1.5.2",
     "wotblitz": "^0.1.3"
   }
 }
