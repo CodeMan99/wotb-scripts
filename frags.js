@@ -63,7 +63,7 @@ async.auto({
   if (err) throw err
 
   var result = d.frags.map(f => {
-    var vehicle = d.vehicles[f.tank_id]
+    var vehicle = d.vehicles[f.tank_id] || f
     vehicle.frags = f.frags
     return vehicle
   })
