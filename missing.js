@@ -32,6 +32,13 @@ var missing = {
 		name: 'IS-2',
 		nation: 'ussr',
 	},
+	'56609': {
+		is_premium: true,
+		tier: 7,
+		type: 'AT-SPG',
+		name: 'T28 Concept',
+		nation: 'usa',
+	},
 }
 
 function addMissingVehicles(current, fields, filter) {
