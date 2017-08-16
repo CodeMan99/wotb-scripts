@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
-var async = require('async'), missing = async.asyncify(require('./missing.js')), wotb = require('wotblitz')
+var async = require('async')
+  , missing = async.asyncify(require('./missing.js'))
+  , wotb = require('wotblitz')
 
 async.auto({
 	sess: wotb.session.load,

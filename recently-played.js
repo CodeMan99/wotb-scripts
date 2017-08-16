@@ -1,6 +1,13 @@
 #!/usr/bin/env node
 
-var async = require('async'), fs = require('fs'), http = require('http'), path = require('path'), program = require('commander'), Stream = require('stream').Transform, url = require('url'), wotb = require('wotblitz')
+var async = require('async')
+  , fs = require('fs')
+  , http = require('http')
+  , path = require('path')
+  , program = require('commander')
+  , Stream = require('stream').Transform
+  , url = require('url')
+  , wotb = require('wotblitz')
 
 program
 	.option('-u, --username <name>', 'attempts to return average-tier based on username', s => s.toLowerCase())

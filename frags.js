@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
-var async = require('async'), missing = async.asyncify(require('./missing.js')), program = require('commander'), wotb = require('wotblitz')
+var async = require('async')
+  , missing = async.asyncify(require('./missing.js'))
+  , program = require('commander')
+  , wotb = require('wotblitz')
 
 program
 	.option('-c, --count <number>', 'number of vehicles to return', Number, 5)

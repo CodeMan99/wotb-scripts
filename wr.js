@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
-var async = require('async'), missing = async.asyncify(require('./missing.js')), program = require('commander'), wotb = require('wotblitz')
+var async = require('async')
+  , missing = async.asyncify(require('./missing.js'))
+  , program = require('commander')
+  , wotb = require('wotblitz')
 
 program
 	.option('-u, --username <name>', 'attempts to return win rate based on username', s => s.toLowerCase())
