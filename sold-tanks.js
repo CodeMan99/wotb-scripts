@@ -3,7 +3,7 @@
 var os = require('os');
 var path = require('path');
 var session = require(path.join(os.homedir(), '.wotblitz.json'));
-var wotblitz = require('wotblitz');
+var wotblitz = require('wotblitz')();
 
 wotblitz.tanks.stats(session.auth.account_id, session.auth.access_token, null, '0', 'tank_id').then(stats => {
 	var tank_id = stats[session.auth.account_id].map(s => s.tank_id);

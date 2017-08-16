@@ -1,14 +1,18 @@
 #!/usr/bin/env node
 
 var logger = require('./lib/logger.js')();
-var wotblitz = require('wotblitz');
+var wotblitz = require('wotblitz')();
 var program = require('commander');
 
 program
 	.option('-a, --account <account_id>', 'WarGaming assigned account_id', Number)
 	.parse(process.argv);
 
-if (!program.account) return;
+if (!program.account) {
+	console.error('max-xp: no account_id provided');
+	process.exitCode = 1;
+	return;
+}
 
 wotblitz.tanks.stats(program.account, null, null, null, ['tank_id', 'all.max_xp'])
 	.then(data => data[program.account])
