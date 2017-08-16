@@ -1,12 +1,36 @@
 module.exports = addMissingVehicles;
 
 var missing = {
-	'55889': {
+	// Example missing tank
+	/**
+	 * '55889': {
+	 *	 is_premium: true,
+	 *	 tier: 6,
+	 *	 type: 'mediumTank',
+	 *	 name: 'Cromwell B',
+	 *	 nation: 'uk',
+	 * },
+	 */
+	'52225': {
 		is_premium: true,
-		tier: 6,
-		type: 'mediumTank',
-		name: 'Cromwell B',
+		tier: 3,
+		type: 'lightTank',
+		name: 'BT-SV',
+		nation: 'ussr',
+	},
+	'64081': {
+		is_premium: true,
+		tier: 1,
+		type: 'heavyTank',
+		name: 'Mk. 1 Heavy Tank',
 		nation: 'uk',
+	},
+	'59137': {
+		is_premium: true,
+		tier: 7,
+		type: 'heavyTank',
+		name: 'IS-2',
+		nation: 'ussr',
 	},
 }
 
