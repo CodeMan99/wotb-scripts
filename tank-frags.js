@@ -1,30 +1,26 @@
 #!/usr/bin/env node
 
-var async = require('async')
-  , missing = async.asyncify(require('./missing.js'))
-  , wotb = require('wotblitz')
+var missing = require('./missing.js')
+  , session = require('./lib/session.js')
+  , wotblitz = require('wotblitz')()
 
-async.auto({
-	sess: wotb.session.load,
-	vehicles: (callback, d) => wotb.tankopedia.vehicles([], [], ['name', 'nation', 'tier'], callback),
-	all: ['vehicles', (callback, d) => missing(d.vehicles, ['name', 'nation', 'tier'], callback)],
-	login: ['sess', (callback, d) => d.sess.isLoggedIn() ? callback(null) : wotb.auth.login(8000, d.sess, callback)],
-	stats: ['sess', 'login', (callback, d) =>
-		wotb.tankStats.stats(null, [], null, ['frags', 'tank_id'], d.sess, callback)
-	]
-}, (err, d) => {
-	if (err) throw err
+var fields = ['name', 'nation', 'tier']
 
-	var result = d.stats[d.sess.account_id]
-		.map(t => ({
-			name: d.all[t.tank_id].name,
-			nation: d.all[t.tank_id].nation,
-			tier: d.all[t.tank_id].tier,
-			frags: Object.keys(t.frags)
-				.sort((a, b) => t.frags[b] - t.frags[a])
-				.map(id => ({
-					[d.all[id].name]: t.frags[id]
-				}))
+Promise.all([
+	session.load().then(sess => {
+		return wotblitz.tanks.stats(sess.account_id, sess.token, null, null, ['frags', 'tank_id'])
+			.then(stats => stats[sess.account_id])
+	}),
+	wotblitz.encyclopedia.vehicles(null, null, fields).then(vehicles => missing(vehicles, fields))
+]).then(([stats, vehicles]) => {
+	var result = stats
+		.map(tank => ({
+			name: vehicles[tank.tank_id].name,
+			nation: vehicles[tank.tank_id].nation,
+			tier: vehicles[tank.tank_id].tier,
+			frags: Object.keys(tank.frags)
+				.sort((a, b) => tank.frags[b] - tank.frags[a])
+				.map(id => ({[vehicles[id].name]: tank.frags[id]}))
 		}))
 		.sort((a, b) => a.tier - b.tier)
 
@@ -36,4 +32,4 @@ async.auto({
 	} else {
 		console.log(JSON.stringify(result, null, 2))
 	}
-})
+}).catch(error => console.error(error.stack || error))
