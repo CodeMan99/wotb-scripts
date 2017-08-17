@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-var async = require('async');
-var missing = async.asyncify(require('./missing.js'));
-var program = require('commander');
-var wotb = require('wotblitz');
+var missing = require('./missing.js')
+var program = require('commander')
+var session = require('./lib/session.js')
+var wotblitz = require('wotblitz')()
 
 program
 	.option('-u, --username <name>', 'attempts to return average-tier based on username', s => s.toLowerCase())
@@ -16,10 +16,14 @@ if (program.onlyPremium && program.onlyRegular) {
 	console.error()
 	console.error("  `--only-premium' and `--only-regular' are mutually exclusive options")
 	console.error()
-	process.exit(1)
+	process.exitCode = 1
+	return
 }
 
-var getAccountId = async.asyncify((sess, usernames) => {
+Promise.all([
+	session.load(),
+	program.username ? wotblitz.account.list(program.username) : null
+]).then(([sess, usernames]) => {
 	if (program.account)
 		return program.account
 	else if (usernames) {
@@ -33,25 +37,19 @@ var getAccountId = async.asyncify((sess, usernames) => {
 		return sess.account_id
 	else
 		throw new Error('Cannot find account_id')
-})
+}).then(account_id => {
+	var fields = ['is_premium', 'tier']
 
-async.auto({
-	sess: wotb.session.load,
-	vehicles: (callback, d) => wotb.tankopedia.vehicles([], [], ['is_premium', 'tier'], callback),
-	all: ['vehicles', (callback, d) => missing(d.vehicles, ['is_premium', 'tier'], callback)],
-	usernames: (callback, d) => program.username ? wotb.players.list(program.username, null, callback) : callback(null),
-	account_id: ['sess', 'usernames', (callback, d) => getAccountId(d.sess, d.usernames, callback)],
-	stats: ['account_id', (callback, d) =>
-		wotb.tankStats.stats(Number(d.account_id), [], null, ['all.battles', 'tank_id'], null, callback)
-	]
-}, (err, d) => {
-	if (err) throw err
-
-	var battles = d.stats[d.account_id]
-		.map(t => ({
-			battles: t.all.battles,
-			is_premium: d.all[t.tank_id].is_premium,
-			tier: d.all[t.tank_id].tier
+	return Promise.all([
+		wotblitz.encyclopedia.vehicles(null, null, fields).then(vehicles => missing(vehicles, fields)),
+		wotblitz.tanks.stats(account_id, null, null, null, ['all.battles', 'tank_id']).then(stats => stats[account_id])
+	])
+}).then(([vehicles, stats]) => {
+	var battles = stats
+		.map(({all, tank_id}) => ({
+			battles: all.battles,
+			is_premium: vehicles[tank_id].is_premium,
+			tier: vehicles[tank_id].tier
 		}))
 		.filter(b => {
 			if (program.onlyPremium) return b.is_premium
@@ -62,16 +60,10 @@ async.auto({
 			if (!memo[val.tier]) memo[val.tier] = 0
 			memo[val.tier] += val.battles
 			return memo
-		}, {}),
-		numerator = Object.keys(battles).reduce((memo, tier) => {
-			memo += tier * battles[tier];
-			return memo
-		}, 0),
-		denominator = Object.keys(battles).reduce((memo, tier) => {
-			memo += battles[tier];
-			return memo
-		}, 0),
-		average = numerator / denominator
+		}, {})
+	var numerator = Object.keys(battles).reduce((memo, tier) => memo + tier * battles[tier], 0)
+	var denominator = Object.keys(battles).reduce((memo, tier) => memo + battles[tier], 0)
+	var average = numerator / denominator
 
 	console.log('Average tier: ' + average.toFixed(4))
-})
+}).catch(error => console.error(error.stack || error))
