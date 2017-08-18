@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 
-var async = require('async')
+var entries = require('object.entries')
+  , fetch = require('node-fetch')
   , fs = require('fs')
-  , http = require('http')
+  , missing = require('./missing.js')
   , path = require('path')
   , program = require('commander')
-  , Stream = require('stream').Transform
+  , promisepipe = require('promisepipe')
+  , session = require('./lib/session.js')
   , url = require('url')
-  , wotb = require('wotblitz')
+  , wotblitz = require('wotblitz')()
 
 program
 	.option('-u, --username <name>', 'attempts to return average-tier based on username', s => s.toLowerCase())
@@ -16,7 +18,10 @@ program
 	.option('-s, --save-images <directory>', 'save images to the given directory', directoryType)
 	.parse(process.argv)
 
-var getAccountId = async.asyncify((sess, usernames) => {
+Promise.all([
+	session.load(),
+	program.username ? woblitz.account.list(program.username) : null
+]).then(([sess, usernames]) => {
 	if (program.account)
 		return program.account
 	else if (usernames) {
@@ -30,63 +35,63 @@ var getAccountId = async.asyncify((sess, usernames) => {
 		return sess.account_id
 	else
 		throw new Error('Cannot find account_id')
-})
+}).then(account_id => {
+	return wotblitz.tanks.stats(account_id, null, null, null, ['last_battle_time', 'tank_id']).then(stats => stats[account_id])
+}).then(stats => {
+	var recent = stats.sort((a, b) => b.last_battle_time - a.last_battle_time).slice(0, program.count)
+	var tank_id = recent.map(stat => stat.tank_id);
+	var _p_vehicles = wotblitz.encyclopedia.vehicles(tank_id, null, ['images.preview', 'name'])
 
-async.auto({
-	sess: wotb.session.load,
-	usernames: (callback, d) => program.username ? wotb.players.list(program.username, null, callback) : callback(null),
-	account_id: ['sess', 'usernames', (callback, d) => getAccountId(d.sess, d.usernames, callback)],
-	stats: ['account_id', (callback, d) =>
-		wotb.tankStats.stats(Number(d.account_id), [], null, ['last_battle_time', 'tank_id'], null, callback)
-	],
-	recent: ['stats', (callback, d) =>
-		callback(null, d.stats[d.account_id]
-			.sort((a, b) => b.last_battle_time - a.last_battle_time)
-			.slice(0, program.count)
-		)
-	],
-	vehicles: ['recent', (callback, d) =>
-		wotb.tankopedia.vehicles(d.recent.map(r => r.tank_id), [], ['images.preview', 'name'], callback)
-	],
-	images: ['vehicles', (callback, d) => {
-		if (!program.saveImages) return callback(null)
-		async.map(d.vehicles, image.bind(null, program.saveImages), callback)
-	}]
-}, (err, d) => {
-	if (err) throw err
+	return Promise.all([
+		_p_vehicles.then(vehicles => missing(vehicles, ['name'], (_, id) => tank_id.indexOf(+id) > -1)),
+		recent,
+		program.saveImages && _p_vehicles.then(vehicles => {
+			return Promise.all(entries(vehicles).map(([tank_id, vehicle]) => {
+				return image(vehicle).then(file => ({file, tank_id}))
+			})).then(images => {
+				var result = {}
 
-	var vehicles = d.recent.map(r => ({
-		image: d.vehicles[r.tank_id].images.preview,
-		last_battle_time: new Date(r.last_battle_time * 1000),
-		name: d.vehicles[r.tank_id].name
+				for (var img of images) {
+					result[img.tank_id] = img.file
+				}
+
+				return result
+			})
+		})
+	])
+}).then(([vehicles, stats, images]) => {
+	var result = stats.map(({last_battle_time: time, tank_id: id}) => ({
+		image: images && images[id] || (() => { try { return vehicles[id].images.preview; } catch (e) {} return 'EISEMPTY'; })(),
+		last_battle_time: new Date(time * 1000),
+		name: vehicles[id].name
 	}))
 
-	if (process.stdout.isTTY)
-		console.dir(vehicles, {
+	if (process.stdout.isTTY) {
+		console.dir(result, {
 			colors: true
 		})
-	else
-		console.log(JSON.stringify(vehicles, null, 2))
+	} else {
+		console.log(JSON.stringify(result, null, 2))
+	}
+}).catch(error => {
+	console.error(error.stack || error)
 })
 
-function image(directory, vehicle, callback) {
-	var imgUrl = vehicle.images.preview,
-		filepath = path.join(directory,
-			url.parse(imgUrl)
-			.pathname
-			.split('/')
-			.slice(-1)[0]
-		)
+function image(vehicle) {
+	if (!program.saveImages) return Promise.resolve(null)
+	if (!vehicle.images || !vehicle.images.preview) return Promise.resolve(null)
 
-	http.get(imgUrl, response => {
-		var data = new Stream()
+	var imgUrl = vehicle.images.preview
+	var directory = program.saveImages
+	var filepath = path.join(directory, url.parse(imgUrl).pathname.split('/').pop())
 
-		response.on('data', chunk => data.push(chunk))
-		response.on('end', () => {
-			data.pipe(fs.createWriteStream(filepath))
-			callback(null)
+	return fetch(imgUrl)
+		.then(response => promisepipe(response.body, fs.createWriteStream(filepath)))
+		.then(() => {
+			var cwd = process.cwd()
+
+			return filepath.startsWith(cwd) ? path.relative(cwd, filepath) : filepath
 		})
-	}).once('error', callback)
 }
 
 function directoryType(val) {

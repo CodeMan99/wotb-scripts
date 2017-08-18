@@ -42,11 +42,11 @@ var missing = {
 }
 
 function addMissingVehicles(current, fields, filter) {
-	for (var k in missing) {
-		if (k in current) throw new Error('Vehicle key "' + k + '" exists in current')
-		if (filter && Object.keys(filter).find(f => filter[f].indexOf(missing[k][f]) === -1)) continue
-		current[k] = {}
-		fields.forEach(f => current[k][f] = missing[k][f])
+	for (var key in missing) {
+		if (key in current && current[key] !== null) throw new Error('Vehicle key "' + key + '" exists in current')
+		if (filter && !filter(missing[key], key)) continue
+		current[key] = {}
+		fields.forEach(field => current[key][field] = missing[key][field])
 	}
 
 	return current

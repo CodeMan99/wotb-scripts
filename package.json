@@ -28,9 +28,12 @@
     "url": "git+https://github.com/CodeMan99/wotb-scripts.git"
   },
   "dependencies": {
-    "commander": "^2.9.0",
-    "concat-stream": "^1.5.2",
+    "commander": "^2.11.0",
+    "concat-stream": "^1.6.0",
+    "node-fetch": "^1.7.2",
+    "object.entries": "^1.0.4",
     "pify": "^3.0.0",
+    "promisepipe": "^2.0.0",
     "wotblitz": "^1.1.0"
   }
 }
