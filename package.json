@@ -12,6 +12,10 @@
     "tank-frags": "./tank-frags.js",
     "wr": "./wr.js"
   },
+  "scripts": {
+    "login": "wotblitz-cli auth --login",
+    "prolongate": "wotblitz-cli auth --prolongate"
+  },
   "keywords": [
     "tank",
     "tanks",
@@ -35,5 +39,8 @@
     "pify": "^3.0.0",
     "promisepipe": "^2.0.0",
     "wotblitz": "^1.1.0"
+  },
+  "devDependencies": {
+    "wotblitz-cli": "^3.0.0"
   }
 }
