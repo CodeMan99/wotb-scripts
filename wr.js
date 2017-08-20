@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
-var async = require('async')
-  , missing = async.asyncify(require('./missing.js'))
+var logger = require('./lib/logger.js')()
+  , missing = require('./missing.js')
   , program = require('commander')
-  , wotb = require('wotblitz')
+  , session = require('./lib/session.js')
+  , wotblitz = require('wotblitz')()
 
 program
 	.option('-u, --username <name>', 'attempts to return win rate based on username', s => s.toLowerCase())
@@ -35,10 +36,10 @@ if (program.lesser && program.greater) {
 	process.exit(1)
 }
 
-var missingFilter = program.nations.length > 0 ? {
-	nation: program.nations
-} : null
-var getAccountId = async.asyncify((sess, usernames) => {
+Promise.all([
+	session.load(),
+	program.username ? wotblitz.account.list(program.username) : null
+]).then(([sess, usernames]) => {
 	if (program.account)
 		return program.account
 	else if (usernames) {
@@ -52,35 +53,29 @@ var getAccountId = async.asyncify((sess, usernames) => {
 		return sess.account_id
 	else
 		throw new Error('Cannot find account_id')
-})
+}).then(account_id => {
+	var fields = ['is_premium', 'name', 'tier', 'type']
+	var filter = program.nations.length > 0 ? ({nation}) => { return program.nations.indexOf(nation) > -1 } : null
 
-async.auto({
-	sess: wotb.session.load,
-	vehicles: (cb, d) => wotb.tankopedia.vehicles(null, program.nations, ['is_premium', 'name', 'tier', 'type'], cb),
-	all: ['vehicles', (cb, d) => missing(d.vehicles, ['is_premium', 'name', 'tier', 'type'], missingFilter, cb)],
-	usernames: (cb, d) => program.username ? wotb.players.list(program.username, null, cb) : cb(null),
-	account_id: ['sess', 'usernames', (cb, d) => getAccountId(d.sess, d.usernames, cb)],
-	stats: ['account_id', (cb, d) =>
-		wotb.tankStats.stats(
-			Number(d.account_id), [], null, ['all.battles', 'all.losses', 'all.wins', 'tank_id'],
-			null, cb
-		)
-	]
-}, (err, d) => {
-	if (err) throw err
-
-	var results = d.stats[d.account_id]
-		.map(s => {
-			var tank = d.all[s.tank_id] || {};
+	return Promise.all([
+		wotblitz.encyclopedia.vehicles(null, program.nations, fields)
+			.then(vehicles => missing(vehicles, fields, filter)),
+		wotblitz.tanks.stats(account_id, null, null, null, ['all.battles', 'all.losses', 'all.wins', 'tank_id'])
+			.then(stats => stats[account_id])
+	])
+}).then(([vehicles, stats]) => {
+	var results = stats
+		.map(({tank_id: id, all}) => {
+			var tank = vehicles[id] || {};
 
 			return {
-				drawn: (s.all.battles - s.all.wins - s.all.losses) / s.all.battles,
-				lost: s.all.losses / s.all.battles,
-				won: s.all.wins / s.all.battles,
+				drawn: (all.battles - all.wins - all.losses) / all.battles,
+				lost: all.losses / all.battles,
+				won: all.wins / all.battles,
 
-				battles: s.all.battles,
-				losses: s.all.losses,
-				wins: s.all.wins,
+				battles: all.battles,
+				losses: all.losses,
+				wins: all.wins,
 
 				is_premium: tank.is_premium,
 				name: tank.name,
@@ -130,7 +125,7 @@ async.auto({
 	if (program.streak) {
 		console.log('    Win Streak: %d', winStreakToReach(program.streak, overall.wins, overall.battles))
 	}
-})
+}).catch(logger.error)
 
 function tiersType(val, memo) {
 	if (!memo) memo = []
