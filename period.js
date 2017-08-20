@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 var fs = require('fs')
+  , logger = require('./lib/logger.js')()
   , missing = require('./missing.js')
   , path = require('path')
   , pify = require('pify')
@@ -56,7 +57,7 @@ if (program.start) {
 		updateSession
 	])
 		.then(() => console.log('Success: started new session.'))
-		.catch(error => console.error(error.stack || error))
+		.catch(logger.error)
 } else {
 	var fields = ['name', 'nation', 'tier', 'type']
 
@@ -111,12 +112,8 @@ if (program.start) {
 			})
 			.filter(count => count.battles > 0)
 
-		if (process.stdout.isTTY) {
-			console.dir(result, {colors: true})
-		} else {
-			console.log(JSON.stringify(result, null, 2))
-		}
-	}).catch(error => console.error(error.stack || error))
+		return result
+	}).then(logger.write, logger.error)
 }
 
 function Count() {

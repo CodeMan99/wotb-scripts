@@ -3,6 +3,7 @@
 var entries = require('object.entries')
   , fetch = require('node-fetch')
   , fs = require('fs')
+  , logger = require('./lib/logger.js')()
   , missing = require('./missing.js')
   , path = require('path')
   , program = require('commander')
@@ -60,22 +61,12 @@ Promise.all([
 		})
 	])
 }).then(([vehicles, stats, images]) => {
-	var result = stats.map(({last_battle_time: time, tank_id: id}) => ({
+	return stats.map(({last_battle_time: time, tank_id: id}) => ({
 		image: images && images[id] || (() => { try { return vehicles[id].images.preview; } catch (e) {} return 'EISEMPTY'; })(),
 		last_battle_time: new Date(time * 1000),
 		name: vehicles[id].name
 	}))
-
-	if (process.stdout.isTTY) {
-		console.dir(result, {
-			colors: true
-		})
-	} else {
-		console.log(JSON.stringify(result, null, 2))
-	}
-}).catch(error => {
-	console.error(error.stack || error)
-})
+}).then(logger.write, logger.error)
 
 function image(vehicle) {
 	if (!program.saveImages) return Promise.resolve(null)

@@ -21,6 +21,8 @@ Promise.all([
 	session.load(),
 	wotblitz.encyclopedia.vehicles(null, null, ['tier']).then(vehicles => missing(vehicles, ['tier']))
 ]).then(([sess, vehicles]) => {
+	if (!sess.isLoggedIn()) throw new Error('frags: session is not logged in')
+
 	return wotblitz.account.info(sess.account_id, sess.token, null, ['statistics.frags']).then(info => {
 		var frags = info[sess.account_id].statistics.frags
 		var tierFilter = id => program.tiers.length === 0 || program.tiers.indexOf(vehicles[id].tier) > -1

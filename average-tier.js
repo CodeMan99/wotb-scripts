@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+var logger = require('./lib/logger.js')()
 var missing = require('./missing.js')
 var program = require('commander')
 var session = require('./lib/session.js')
@@ -66,4 +67,4 @@ Promise.all([
 	var average = numerator / denominator
 
 	console.log('Average tier: ' + average.toFixed(4))
-}).catch(error => console.error(error.stack || error))
+}).catch(logger.error)
