@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
-var async = require('async')
-  , missing = async.asyncify(require('./missing.js'))
+var logger = require('./lib/logger.js')()
+  , missing = require('./missing.js')
   , program = require('commander')
-  , wotb = require('wotblitz')
+  , session = require('./lib/session.js')
+  , wotblitz = require('wotblitz')()
 
 program
 	.option('-c, --count <number>', 'number of vehicles to return', Number, 5)
@@ -16,68 +17,38 @@ program
 	)
 	.parse(process.argv)
 
-async.auto({
-	sess: wotb.session.load,
-	_all: callback => wotb.tankopedia.vehicles([], [], ['tier'], callback),
-	all: ['_all', (callback, d) => missing(d._all, ['tier'], callback)],
-	login: ['sess', (callback, d) => d.sess.isLoggedIn() ? callback(null) : wotb.auth.login(8000, d.sess, callback)],
-	stats: ['login', (callback, d) => wotb.players.info(null, [], ['statistics.frags'], d.sess, callback)],
-	frags: ['all', 'stats', (callback, d) => {
-		var frags = d.stats[d.sess.account_id].statistics.frags,
-			tierFilter = id => program.tiers.length === 0 || program.tiers.indexOf(d.all[id].tier) > -1,
-			ret
+Promise.all([
+	session.load(),
+	wotblitz.encyclopedia.vehicles(null, null, ['tier']).then(vehicles => missing(vehicles, ['tier']))
+]).then(([sess, vehicles]) => {
+	return wotblitz.account.info(sess.account_id, sess.token, null, ['statistics.frags']).then(info => {
+		var frags = info[sess.account_id].statistics.frags
+		var tierFilter = id => program.tiers.length === 0 || program.tiers.indexOf(vehicles[id].tier) > -1
+		var fields
+		var tankIds
 
 		switch (program.mode) {
 		case 'most':
-			ret = Object.keys(frags).filter(tierFilter).sort((a, b) => frags[b] - frags[a])
+			tankIds = Object.keys(frags).filter(tierFilter).sort((a, b) => frags[b] - frags[a])
 			break
 		case 'least':
-			ret = Object.keys(frags).filter(tierFilter).sort((a, b) => frags[a] - frags[b])
+			tankIds = Object.keys(frags).filter(tierFilter).sort((a, b) => frags[a] - frags[b])
 			break
 		case 'none':
-			ret = Object.keys(d.all).filter(id => !(id in frags) && tierFilter(id))
+			tankIds = Object.keys(vehicles).filter(id => !(id in frags) && tierFilter(id))
 			break
 		}
 
-		callback(null,
-			// not entirely sure 'count' makes sense for 'none' mode
-			ret.slice(0, program.count).map(id => ({
-				tank_id: id,
-				frags: frags[id] || 0
-			}))
-		)
-	}],
-	_missing: callback => missing({}, ['nation', 'name', 'tier'], callback),
-	vehicles: ['frags', '_missing', (callback, d) => {
-		var tankIds = d.frags.map(f => f.tank_id)
+		tankIds = tankIds.slice(0, program.count)
+		fields = ['nation', 'name', 'tier']
 
-		// remove missing tanks if they are not in the "d.frags" array
-		Object.keys(d._missing).forEach(id => {
-			if (tankIds.indexOf(id) === -1) delete d._missing[id]
+		return wotblitz.encyclopedia.vehicles(tankIds, null, fields).then(tanks => {
+			tanks = missing(tanks, fields, (_, id) => tankIds.indexOf(id) > -1)
+
+			return tankIds.map(id => Object.assign(tanks[id], {frags: frags[id] || 0}))
 		})
-
-		wotb.tankopedia.vehicles(tankIds, [], ['nation', 'name', 'tier'], (err, tanks) => {
-			if (err) return callback(err)
-
-			callback(null, Object.assign(tanks, d._missing))
-		})
-	}]
-}, (err, d) => {
-	if (err) throw err
-
-	var result = d.frags.map(f => {
-		var vehicle = d.vehicles[f.tank_id] || f
-		vehicle.frags = f.frags
-		return vehicle
 	})
-
-	if (process.stdout.isTTY)
-		console.dir(result, {
-			colors: true
-		})
-	else
-		console.log(JSON.stringify(result, null, 2))
-})
+}).then(logger.write, logger.error)
 
 function numbersType(val, memo) {
 	memo.push(Number(val))
