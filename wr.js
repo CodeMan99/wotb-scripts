@@ -4,6 +4,7 @@ var logger = require('./lib/logger.js')()
   , missing = require('./missing.js')
   , program = require('commander')
   , session = require('./lib/session.js')
+  , types = require('./lib/types.js')
   , wotblitz = require('wotblitz')()
 
 program
@@ -16,7 +17,7 @@ program
 	.option('-l, --lesser <percentage>', 'display tanks with win rate less than the given value', percentageType)
 	.option('-g, --greater <percentage>', 'display tanks with win rate greater than the given value', percentageType)
 
-	.option('-t, --tiers <number>', 'display tanks from the given tiers', tiersType, [])
+	.option('-t, --tiers <number>', 'display tanks from the given tiers', types.numbers, [])
 	.option('-T, --types <vehicletype>', 'display tanks with the given vehicle type', vehicleType, [])
 	.option('-n, --nations <name>', 'display only a given nation', nationsType, [])
 	.option('-s, --streak <percentage>', 'get a win streak count to reach a given percentage', percentageType)
@@ -126,12 +127,6 @@ Promise.all([
 		console.log('    Win Streak: %d', winStreakToReach(program.streak, overall.wins, overall.battles))
 	}
 }).catch(logger.error)
-
-function tiersType(val, memo) {
-	if (!memo) memo = []
-	memo.push(Number(val))
-	return memo
-}
 
 function percentageType(val) {
 	return Number(val) / 100

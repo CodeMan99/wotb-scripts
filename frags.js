@@ -3,12 +3,13 @@
 var logger = require('./lib/logger.js')()
   , missing = require('./missing.js')
   , program = require('commander')
+  , types = require('./lib/types.js')
   , session = require('./lib/session.js')
   , wotblitz = require('wotblitz')()
 
 program
 	.option('-c, --count <number>', 'number of vehicles to return', Number, 5)
-	.option('-t, --tiers <number>', 'filter to kills to this tier', numbersType, [])
+	.option('-t, --tiers <number>', 'filter to kills to this tier', types.numbers, [])
 	.option(
 		'-m, --mode <most|least|none>',
 		'get your most kills, least kills, or never killed [default: most]',
@@ -51,11 +52,6 @@ Promise.all([
 		})
 	})
 }).then(logger.write, logger.error)
-
-function numbersType(val, memo) {
-	memo.push(Number(val))
-	return memo
-}
 
 function modeType(val) {
 	val = val.toLowerCase().trim()
