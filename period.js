@@ -129,9 +129,9 @@ Count.prototype.add = function add(other) {
 	return this
 }
 
-Count.prototype.difference = function difference(old) {
-	this.wins -= old.wins
-	this.losses -= old.losses
-	this.battles -= old.battles
+Count.prototype.difference = function difference(other) {
+	this.wins -= other.wins
+	this.losses -= other.losses
+	this.battles -= other.battles
 	return this
 }
