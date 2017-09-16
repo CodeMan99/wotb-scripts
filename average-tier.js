@@ -66,5 +66,8 @@ Promise.all([
 	var denominator = Object.keys(battles).reduce((memo, tier) => memo + battles[tier], 0)
 	var average = numerator / denominator
 
-	console.log('Average tier: ' + average.toFixed(4))
+	logger.write({
+		'Average tier': average.toFixed(4),
+		datetime: new Date()
+	})
 }).catch(logger.error)
