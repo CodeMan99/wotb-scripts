@@ -5,6 +5,7 @@ var logger = require('./lib/logger.js')();
 
 process.stdin.pipe(concat(buf => {
 	var period;
+	var tanks;
 
 	try {
 		period = JSON.parse(buf.toString());
@@ -12,7 +13,15 @@ process.stdin.pipe(concat(buf => {
 		return logger.error(e);
 	}
 
-	var ordered = period.tanks.sort((a, b) => {
+	if (Array.isArray(period)) {
+		tanks = period;
+	} else if ('tanks' in period) {
+		tanks = period.tanks;
+	} else {
+		return logger.error('sort-wr-period: input not reconized');
+	}
+
+	var ordered = tanks.sort((a, b) => {
 		var A = a.wins / a.battles;
 		var B = b.wins / b.battles;
 		var direction = 1;
