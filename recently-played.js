@@ -3,7 +3,7 @@
 var entries = require('object.entries')
   , fetch = require('node-fetch')
   , fs = require('fs')
-  , logger = require('./lib/logger.js')()
+  , logger = require('./lib/logger.js')
   , missing = require('./missing.js')
   , path = require('path')
   , program = require('commander')

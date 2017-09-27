@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 var concat = require('concat-stream');
-var logger = require('./lib/logger.js')();
+var logger = require('./lib/logger.js');
 
 process.stdin.pipe(concat(buf => {
 	var period;

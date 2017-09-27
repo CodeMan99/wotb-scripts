@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 var fs = require('fs')
-  , logger = require('./lib/logger.js')()
+  , logger = require('./lib/logger.js')
   , missing = require('./missing.js')
   , path = require('path')
   , pify = require('pify')

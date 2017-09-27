@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-var logger = require('./lib/logger.js')();
+var logger = require('./lib/logger.js');
 var os = require('os');
 var path = require('path');
 var session = require('./lib/session.js');

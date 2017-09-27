@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-var logger = require('./lib/logger.js')()
+var logger = require('./lib/logger.js')
   , missing = require('./missing.js')
   , session = require('./lib/session.js')
   , wotblitz = require('wotblitz')()
