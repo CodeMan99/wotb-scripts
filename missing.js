@@ -39,6 +39,13 @@ var missing = {
 		name: 'T28 Concept',
 		nation: 'usa',
 	},
+	'64769': {
+		is_premium: true,
+		tier: 8,
+		type: 'heavyTank',
+		name: 'IS-6 Fearless',
+		nation: 'ussr',
+	},
 }
 
 function addMissingVehicles(current, fields, filter) {
