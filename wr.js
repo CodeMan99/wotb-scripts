@@ -94,7 +94,13 @@ Promise.all([
 		)
 		.sort((a, b) => a.won - b.won)
 
-	results.forEach(wr => {
+	var overall = {
+		battles: 0,
+		losses: 0,
+		wins: 0
+	}
+
+	for (var wr of results) {
 		console.log('Name: %s  Tier: %d  Type: %s', wr.name, wr.tier, wr.type)
 		console.log('    Win Rate:   %s%%', (wr.won * 100).toFixed(2))
 		console.log('    Loss Rate:  %s%%', (wr.lost * 100).toFixed(2))
@@ -103,18 +109,11 @@ Promise.all([
 		if (program.streak) {
 			console.log('    Win Streak: %d', winStreakToReach(program.streak, wr.wins, wr.battles))
 		}
-	})
 
-	var overall = results.reduce((memo, wr) => {
-		memo.battles += wr.battles
-		memo.losses += wr.losses
-		memo.wins += wr.wins
-		return memo
-	}, {
-		battles: 0,
-		losses: 0,
-		wins: 0
-	})
+		overall.battles += wr.battles
+		overall.losses += wr.losses
+		overall.wins += wr.wins
+	}
 
 	console.log('-------- Overall --------')
 	console.log('    Win Rate:  %s%%', (overall.wins / overall.battles * 100).toFixed(2))

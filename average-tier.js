@@ -46,28 +46,25 @@ Promise.all([
 		wotblitz.tanks.stats(account_id, null, null, null, ['all.battles', 'tank_id']).then(stats => stats[account_id])
 	])
 }).then(([vehicles, stats]) => {
-	var battles = stats
-		.map(({all, tank_id}) => ({
-			battles: all.battles,
-			is_premium: vehicles[tank_id].is_premium,
-			tier: vehicles[tank_id].tier
-		}))
-		.filter(b => {
-			if (program.onlyPremium) return b.is_premium
-			if (program.onlyRegular) return !b.is_premium
-			return true
-		})
-		.reduce((memo, val) => {
-			if (!memo[val.tier]) memo[val.tier] = 0
-			memo[val.tier] += val.battles
-			return memo
-		}, {})
-	var numerator = Object.keys(battles).reduce((memo, tier) => memo + tier * battles[tier], 0)
-	var denominator = Object.keys(battles).reduce((memo, tier) => memo + battles[tier], 0)
-	var average = numerator / denominator
+	var is_premium, counter = new Array(10).fill(0)
+	var numerator = 0, denominator = 0
+
+	for (var {all, tank_id} of stats) {
+		is_premium = vehicles[tank_id].is_premium
+
+		if (program.onlyPremium && is_premium == false) continue
+		if (program.onlyRegular && is_premium == true) continue
+
+		counter[vehicles[tank_id].tier - 1] += all.battles
+	}
+
+	for (var [index, battles] of counter.entries()) {
+		numerator += (index + 1) * battles
+		denominator += battles
+	}
 
 	logger.write({
-		'Average tier': average.toFixed(4),
+		'Average tier': (numerator / denominator).toFixed(4),
 		datetime: new Date()
 	})
 }).catch(logger.error)
