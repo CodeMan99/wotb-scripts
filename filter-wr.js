@@ -20,6 +20,6 @@ process.stdin.pipe(concat(buf => {
 	} else {
 		return logger.error('filter-wr: input not reconized');
 	}
-	
+
 	logger.write(tanks.filter(tank => tank.battles > 2));
 }));
