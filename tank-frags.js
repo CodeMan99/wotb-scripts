@@ -21,9 +21,10 @@ Promise.all([
 			name: vehicles[tank.tank_id].name,
 			nation: vehicles[tank.tank_id].nation,
 			tier: vehicles[tank.tank_id].tier,
-			frags: Object.keys(tank.frags)
+			frags: Object.assign({}, ...Object.keys(tank.frags)
 				.sort((a, b) => tank.frags[b] - tank.frags[a])
 				.map(id => ({[vehicles[id].name]: tank.frags[id]}))
+			)
 		}))
 		.sort((a, b) => a.tier - b.tier)
 }).then(logger.write, logger.error)
