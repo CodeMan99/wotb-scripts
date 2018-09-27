@@ -22,7 +22,24 @@ Promise.all([
 			nation: vehicles[tank.tank_id].nation,
 			tier: vehicles[tank.tank_id].tier,
 			frags: Object.assign({}, ...Object.keys(tank.frags)
-				.sort((a, b) => tank.frags[b] - tank.frags[a])
+				.sort((a, b) => {
+					var A = tank.frags[a]
+					var B = tank.frags[b]
+
+					if (A < B) return 1
+					if (A > B) return -1
+
+					A = vehicles[a].tier
+					B = vehicles[b].tier
+
+					if (A < B) return 1
+					if (A > B) return -1
+
+					A = vehicles[a].name
+					B = vehicles[b].name
+
+					return A.localeCompare(B)
+				})
 				.map(id => ({[vehicles[id].name]: tank.frags[id]}))
 			)
 		}))
