@@ -11,13 +11,6 @@ var missing = {
 	 *	 nation: 'uk',
 	 * },
 	 */
-	'52225': {
-		is_premium: true,
-		tier: 3,
-		type: 'lightTank',
-		name: 'BT-SV',
-		nation: 'ussr',
-	},
 	'64081': {
 		is_premium: true,
 		tier: 1,
