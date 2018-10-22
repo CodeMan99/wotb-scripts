@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 
+/**
+ * Example usage with prolongate call
+ *
+ * ./max-xp.js -a $(npm run prolongate | sed '/^>\s/ d' | json account_id)
+ */
+
 var logger = require('./lib/logger.js');
 var wotblitz = require('wotblitz')();
 var program = require('commander');
