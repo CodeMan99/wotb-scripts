@@ -32,6 +32,55 @@ var missing = {
 		name: 'IS-6 Fearless',
 		nation: 'ussr',
 	},
+	'1329': {
+		is_premium: false,
+		tier: 1,
+		type: 'lightTank',
+		name: 'Renault NC-31',
+		nation: 'china',
+	},
+	'81': {
+		is_premium: false,
+		tier: 1,
+		type: 'mediumTank',
+		name: 'Vickers Medium Mk. I',
+		nation: 'uk',
+	},
+	'577': {
+		is_premium: false,
+		tier: 1,
+		type: 'lightTank',
+		name: 'Renault FT',
+		nation: 'france',
+	},
+	'3089': {
+		is_premium: false,
+		tier: 1,
+		type: 'lightTank',
+		name: 'Leichttraktor',
+		nation: 'germany',
+	},
+	'545': {
+		is_premium: false,
+		tier: 1,
+		type: 'lightTank',
+		name: 'T1 Cunningham',
+		nation: 'usa',
+	},
+	'609': {
+		is_premium: false,
+		tier: 1,
+		type: 'lightTank',
+		name: 'Renault Otsu',
+		nation: 'japan',
+	},
+	// '3329': {
+	// 	is_premium: false,
+	// 	tier: 1,
+	// 	type: 'lightTank',
+	// 	name: 'MS-1',
+	// 	nation: 'ussr',
+	// },
 }
 
 function addMissingVehicles(current, fields, filter) {
