@@ -4,9 +4,9 @@ var fs = require('fs')
   , logger = require('./lib/logger.js')
   , missing = require('./missing.js')
   , path = require('path')
-  , pify = require('pify')
   , program = require('commander')
   , session = require('./lib/session.js')
+  , util = require('util')
   , wotblitz = require('wotblitz')()
 
 program
@@ -18,8 +18,8 @@ program
 program.start = program.start || !!program.username || !!program.account
 
 var file = path.resolve('./wotblitz-period.json')
-var readFile = pify(fs.readFile)
-var writeFile = pify(fs.writeFile)
+var readFile = util.promisify(fs.readFile)
+var writeFile = util.promisify(fs.writeFile)
 
 var usernames_p = program.username ? wotblitz.players.list(program.username) : null
 var sess_p = session.load()

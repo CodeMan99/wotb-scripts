@@ -35,8 +35,6 @@
     "commander": "^2.15.1",
     "concat-stream": "^1.6.2",
     "node-fetch": "^1.7.2",
-    "object.entries": "^1.0.4",
-    "pify": "^3.0.0",
     "promisepipe": "^2.0.0",
     "wotblitz": "^1.1.1"
   },

@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
-var entries = require('object.entries')
-  , fetch = require('node-fetch')
+var fetch = require('node-fetch')
   , fs = require('fs')
   , logger = require('./lib/logger.js')
   , missing = require('./missing.js')
@@ -47,7 +46,7 @@ Promise.all([
 		_p_vehicles.then(vehicles => missing(vehicles, ['name'], (_, id) => tank_id.indexOf(+id) > -1)),
 		recent,
 		program.saveImages && _p_vehicles.then(vehicles => {
-			return Promise.all(entries(vehicles).map(([tank_id, vehicle]) => {
+			return Promise.all(Object.entries(vehicles).map(([tank_id, vehicle]) => {
 				return image(vehicle).then(file => ({file, tank_id}))
 			})).then(images => {
 				var result = {}
