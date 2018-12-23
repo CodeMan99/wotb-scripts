@@ -13,15 +13,16 @@ process.stdin.pipe(concat(buf => {
 		return logger.error(e);
 	}
 
-	if (Array.isArray(period)) {
-		tanks = period;
-	} else if ('tanks' in period) {
+	if ('tanks' in period) {
 		tanks = period.tanks;
+	} else if (Object.keys(period).length > 0) {
+		tanks = period;
 	} else {
 		return logger.error('sort-wr-period: input not reconized');
 	}
 
-	var ordered = tanks.sort((a, b) => {
+	var result = {};
+	var ordered = Object.entries(tanks).sort(([, a], [, b]) => {
 		var A = a.wins / a.battles;
 		var B = b.wins / b.battles;
 		var direction = 1;
@@ -35,5 +36,9 @@ process.stdin.pipe(concat(buf => {
 		return 0;
 	});
 
-	logger.write(ordered);
+	for (var [key, value] of ordered) {
+		result[key] = value;
+	}
+
+	logger.write(result);
 }));

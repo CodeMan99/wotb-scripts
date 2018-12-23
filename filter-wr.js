@@ -13,13 +13,21 @@ process.stdin.pipe(concat(buf => {
 		return logger.error(e);
 	}
 
-	if (Array.isArray(period)) {
-		tanks = period;
-	} else if ('tanks' in period) {
+	if ('tanks' in period) {
 		tanks = period.tanks;
+	} else if (Object.keys(period).length > 0) {
+		tanks = period;
 	} else {
 		return logger.error('filter-wr: input not reconized');
 	}
 
-	logger.write(tanks.filter(tank => tank.battles > 2));
+	var result = {};
+
+	for (var [key, value] of Object.entries(tanks)) {
+		if (value.battles > 2) {
+			result[key] = value;
+		}
+	}
+
+	logger.write(result);
 }));

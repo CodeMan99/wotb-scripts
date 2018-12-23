@@ -104,13 +104,19 @@ if (program.start) {
 				var newCnt = new Count();
 				var previous = oldStats.find(t => t.tank_id === tank_id)
 
-				newCnt.name = vehicles[tank_id].name
 				newCnt.add(all)
 				if (previous) oldCnt.add(previous.all)
 
-				return newCnt.difference(oldCnt)
+				return {tank_id: tank_id, count: newCnt.difference(oldCnt)}
 			})
-			.filter(count => count.battles > 0)
+			.filter(record => record.count.battles > 0)
+			.reduce((tanks, record) => {
+				var name = vehicles[record.tank_id].name
+
+				tanks[name] = record.count
+
+				return tanks
+			}, {})
 
 		return result
 	}).then(logger.write, logger.error)
