@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-var logger = require('./lib/logger.js')
+var Count = require('./lib/count.js')
+  , logger = require('./lib/logger.js')
   , missing = require('./missing.js')
   , program = require('commander')
   , session = require('./lib/session.js')
@@ -67,16 +68,17 @@ Promise.all([
 }).then(([vehicles, stats]) => {
 	var results = stats
 		.map(({tank_id: id, all}) => {
-			var tank = vehicles[id] || {};
+			var tank = vehicles[id] || {}
+			var {wins, losses, battles} = all
 
 			return {
-				drawn: (all.battles - all.wins - all.losses) / all.battles,
-				lost: all.losses / all.battles,
-				won: all.wins / all.battles,
+				drawn: (battles - wins - losses) / battles,
+				lost: losses / battles,
+				won: wins / battles,
 
-				battles: all.battles,
-				losses: all.losses,
-				wins: all.wins,
+				battles: battles,
+				losses: losses,
+				wins: wins,
 
 				is_premium: tank.is_premium,
 				name: tank.name,
@@ -94,11 +96,7 @@ Promise.all([
 		)
 		.sort((a, b) => a.won - b.won)
 
-	var overall = {
-		battles: 0,
-		losses: 0,
-		wins: 0
-	}
+	var overall = new Count()
 
 	for (var wr of results) {
 		console.log('Name: %s  Tier: %d  Type: %s', wr.name, wr.tier, wr.type)
@@ -107,12 +105,10 @@ Promise.all([
 		console.log('    Draw Rate:  %s%%', (wr.drawn * 100).toFixed(2))
 
 		if (program.streak) {
-			console.log('    Win Streak: %d', winStreakToReach(program.streak, wr.wins, wr.battles))
+			console.log('    Win Streak: %d', winStreakToReach(program.streak, wr))
 		}
 
-		overall.battles += wr.battles
-		overall.losses += wr.losses
-		overall.wins += wr.wins
+		overall.add(wr)
 	}
 
 	console.log('-------- Overall --------')
@@ -123,7 +119,7 @@ Promise.all([
 	)
 
 	if (program.streak) {
-		console.log('    Win Streak: %d', winStreakToReach(program.streak, overall.wins, overall.battles))
+		console.log('    Win Streak: %d', winStreakToReach(program.streak, overall))
 	}
 }).catch(logger.error)
 
@@ -164,6 +160,6 @@ function nationsType(val, memo) {
 	return memo
 }
 
-function winStreakToReach(percentage, wins, battles) {
+function winStreakToReach(percentage, {wins, battles}) {
 	return Math.round((percentage * battles - wins) / (1 - percentage))
 }

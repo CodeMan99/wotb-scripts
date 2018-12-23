@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-var fs = require('fs')
+var Count = require('./lib/count.js')
+  , fs = require('fs')
   , logger = require('./lib/logger.js')
   , missing = require('./missing.js')
   , path = require('path')
@@ -21,24 +22,28 @@ var file = path.resolve('./wotblitz-period.json')
 var readFile = util.promisify(fs.readFile)
 var writeFile = util.promisify(fs.writeFile)
 
-var usernames_p = program.username ? wotblitz.players.list(program.username) : null
 var sess_p = session.load()
-var account_id_p = Promise.all([sess_p, usernames_p]).then(([sess, usernames]) => {
-	if (program.account)
-		return program.account
-	else if (usernames) {
+var account_id_p = null
+var updateSessionAccountId = false
+
+if (program.account) {
+	updateSessionAccountId = true
+	account_id_p = Promise.resolve(program.account)
+} else if (program.username) {
+	updateSessionAccountId = true
+	account_id_p = Promise.all([sess_p, wotblitz.players.list(program.username)]).then(([sess, usernames]) => {
 		if (usernames.length === 1) return usernames[0].account_id
 
 		var player = usernames.find(p => p.nickname.toLowerCase() === program.username)
 		if (player) return player.account_id
 
 		throw new Error(`No account found for "${program.username}"`)
-	} else if (sess.account_id)
-		return sess.account_id
-	else
-		throw new Error('Cannot find account_id')
-})
-var newStats_p = account_id_p.then(account_id => wotblitz.tanks.stats(account_id, null, null, null, [
+	})
+} else {
+	account_id_p = sess_p.then(sess => sess.account_id)
+}
+
+var currentStats_p = account_id_p.then(account_id => wotblitz.tanks.stats(account_id, null, null, null, [
 	'all.battles',
 	'all.losses',
 	'all.wins',
@@ -47,15 +52,17 @@ var newStats_p = account_id_p.then(account_id => wotblitz.tanks.stats(account_id
 ]))
 
 if (program.start) {
-	var updateSession = program.username || program.account ? Promise.all([account_id_p, sess_p]).then(([account_id, sess]) => {
-		sess.account_id = account_id
-		return sess.save()
-	}) : null
+	var writeStats_p = currentStats_p.then(stats => writeFile(file, JSON.stringify(stats), 'utf8'))
+	var updateSession_p = null
 
-	Promise.all([
-		newStats_p.then(stats => writeFile(file, JSON.stringify(stats), 'utf8')),
-		updateSession
-	])
+	if (updateSessionAccountId) {
+		updateSession_p = Promise.all([account_id_p, sess_p]).then(([account_id, sess]) => {
+			sess.account_id = account_id
+			return sess.save()
+		})
+	}
+
+	Promise.all([writeStats_p, updateSession_p])
 		.then(() => console.log('Success: started new session.'))
 		.catch(logger.error)
 } else {
@@ -64,11 +71,11 @@ if (program.start) {
 	Promise.all([
 		wotblitz.encyclopedia.vehicles(null, null, fields).then(vehicles => missing(vehicles, fields)),
 		readFile(file, 'utf8').then(data => JSON.parse(data)),
-		newStats_p,
+		currentStats_p,
 		account_id_p
-	]).then(([vehicles, oldstats, newstats, account_id]) => {
-		var oldStats = oldstats[account_id];
-		var newStats = newstats[account_id];
+	]).then(([vehicles, _previousStats, _currentStats, account_id]) => {
+		var previousStats = _previousStats[account_id]
+		var currentStats = _currentStats[account_id]
 
 		var compareCategories = field => {
 			var createCounts = (counts, {all, tank_id}) => {
@@ -77,37 +84,37 @@ if (program.start) {
 				counts[key].add(all)
 				return counts
 			}
-			var oldVal = oldStats.reduce(createCounts, {})
-			var newVal = newStats.reduce(createCounts, {})
+			var previousTotal = previousStats.reduce(createCounts, {})
+			var currentTotal = currentStats.reduce(createCounts, {})
 
-			for (var k in newVal) {
-				newVal[k] = newVal[k].difference(oldVal[k] || new Count())
+			for (var k in currentTotal) {
+				currentTotal[k] = currentTotal[k].difference(previousTotal[k] || new Count())
 			}
 
-			return newVal
+			return currentTotal
 		}
 
-		var oldGlobal = oldStats.reduce((count, tank) => count.add(tank.all), new Count())
-		var newGlobal = newStats.reduce((count, tank) => count.add(tank.all), new Count())
+		var previousGlobal = previousStats.reduce((count, tank) => count.add(tank.all), new Count())
+		var currentGlobal = currentStats.reduce((count, tank) => count.add(tank.all), new Count())
 
 		var result = {
-			global: newGlobal.difference(oldGlobal),
+			global: currentGlobal.difference(previousGlobal),
 			nations: compareCategories('nation'),
 			tiers: compareCategories('tier'),
 			types: compareCategories('type')
 		};
 
-		result.tanks = newStats
+		result.tanks = currentStats
 			.sort((a, b) => b.last_battle_time - a.last_battle_time)
 			.map(({all, tank_id}) => {
-				var oldCnt = new Count();
-				var newCnt = new Count();
-				var previous = oldStats.find(t => t.tank_id === tank_id)
+				var previousCount = new Count();
+				var currentCount = new Count();
+				var previous = previousStats.find(t => t.tank_id === tank_id)
 
-				newCnt.add(all)
-				if (previous) oldCnt.add(previous.all)
+				currentCount.add(all)
+				if (previous) previousCount.add(previous.all)
 
-				return {tank_id: tank_id, count: newCnt.difference(oldCnt)}
+				return {tank_id: tank_id, count: currentCount.difference(previousCount)}
 			})
 			.filter(record => record.count.battles > 0)
 			.reduce((tanks, record) => {
@@ -120,24 +127,4 @@ if (program.start) {
 
 		return result
 	}).then(logger.write, logger.error)
-}
-
-function Count() {
-	this.wins = 0
-	this.losses = 0
-	this.battles = 0
-}
-
-Count.prototype.add = function add(other) {
-	this.wins += other.wins
-	this.losses += other.losses
-	this.battles += other.battles
-	return this
-}
-
-Count.prototype.difference = function difference(other) {
-	this.wins -= other.wins
-	this.losses -= other.losses
-	this.battles -= other.battles
-	return this
 }
