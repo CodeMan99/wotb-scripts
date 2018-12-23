@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 var Count = require('./lib/count.js')
+  , findAccount = require('./lib/findAccount.js')
   , fs = require('fs')
   , logger = require('./lib/logger.js')
   , missing = require('./missing.js')
@@ -31,14 +32,7 @@ if (program.account) {
 	account_id_p = Promise.resolve(program.account)
 } else if (program.username) {
 	updateSessionAccountId = true
-	account_id_p = Promise.all([sess_p, wotblitz.players.list(program.username)]).then(([sess, usernames]) => {
-		if (usernames.length === 1) return usernames[0].account_id
-
-		var player = usernames.find(p => p.nickname.toLowerCase() === program.username)
-		if (player) return player.account_id
-
-		throw new Error(`No account found for "${program.username}"`)
-	})
+	account_id_p = findAccount(program.username).then(player => player.account_id)
 } else {
 	account_id_p = sess_p.then(sess => sess.account_id)
 }

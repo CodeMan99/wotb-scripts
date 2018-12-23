@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+var findAccount = require('./lib/findAccount.js')
 var logger = require('./lib/logger.js')
 var missing = require('./missing.js')
 var program = require('commander')
@@ -21,24 +22,17 @@ if (program.onlyPremium && program.onlyRegular) {
 	return
 }
 
-Promise.all([
-	session.load(),
-	program.username ? wotblitz.account.list(program.username) : null
-]).then(([sess, usernames]) => {
-	if (program.account)
-		return program.account
-	else if (usernames) {
-		if (usernames.length === 1) return usernames[0].account_id
+var account_id_p = null
 
-		var player = usernames.find(p => p.nickname.toLowerCase() === program.username)
-		if (player) return player.account_id
+if (program.account) {
+	account_id_p = Promise.resolve(program.account)
+} else if (program.username) {
+	account_id_p = findAccount(program.username).then(player => player.account_id)
+} else {
+	account_id_p = session.load().then(sess => sess.account_id)
+}
 
-		throw new Error('No account found for "' + program.username + '"')
-	} else if (sess.account_id)
-		return sess.account_id
-	else
-		throw new Error('Cannot find account_id')
-}).then(account_id => {
+account_id_p.then(account_id => {
 	var fields = ['is_premium', 'tier']
 
 	return Promise.all([
