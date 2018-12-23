@@ -3,7 +3,7 @@
 var Count = require('./lib/count.js')
   , findAccount = require('./lib/findAccount.js')
   , logger = require('./lib/logger.js')
-  , missing = require('./missing.js')
+  , missing = require('./lib/missing.js')
   , program = require('commander')
   , session = require('./lib/session.js')
   , types = require('./lib/types.js')

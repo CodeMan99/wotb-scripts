@@ -2,7 +2,7 @@
 
 var findAccount = require('./lib/findAccount.js')
 var logger = require('./lib/logger.js')
-var missing = require('./missing.js')
+var missing = require('./lib/missing.js')
 var program = require('commander')
 var session = require('./lib/session.js')
 var wotblitz = require('wotblitz')()
