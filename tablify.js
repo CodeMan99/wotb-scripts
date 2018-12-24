@@ -38,8 +38,7 @@ WriteTableStream.prototype._write = function(chunk, encoding, next) {
 };
 
 WriteTableStream.prototype._final = function(done) {
-	process.stdout.write('\n');
-	done(null);
+	process.stdout.write('\n', done);
 };
 
 {
@@ -100,11 +99,26 @@ WriteTableStream.prototype._final = function(done) {
 		.pipe(new WriteTableStream(options));
 }
 
+/**
+ * Convert a flat object to an array of values suitable for use with [table]{@link https://npmjs.com/package/table}.
+ *
+ * @param {Object} obj source of plain values
+ * @param {Object} [options]
+ * @param {string[]} [options.columns] the key names to use. Order is respected. Default is the result of `Object.keys(obj)`
+ * @param {Object} [options.custom=null] additional values to use. Keys must not overlap with source obj.
+ * @param {*} [options.default=''] value to use if a column name is not found in either the source obj or additional custom values.
+ * @returns {Array} values in the same order as the specified columns
+ */
 function rowify(obj, options) {
 	const columns = options && options.columns || Object.keys(obj);
 	const custom = options && options.custom;
 	const missingValue = options && options['default'] || '';
 	const row = [];
+
+	// add keys if no columns were specified
+	if (custom && !options.columns) {
+		columns.push(...Object.keys(custom));
+	}
 
 	for (const column of columns) {
 		if (obj.hasOwnProperty(column)) {
