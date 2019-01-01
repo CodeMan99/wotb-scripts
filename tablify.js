@@ -89,7 +89,10 @@ WriteTableStream.prototype._final = function(done) {
 				}
 
 				if (headerRow) {
-					this.push(headerRow);
+					if (!err) {
+						this.push(headerRow);
+					}
+
 					headerRow = null;
 				}
 
