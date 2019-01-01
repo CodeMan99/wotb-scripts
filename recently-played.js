@@ -22,14 +22,14 @@ program
 var account_id_p = null
 
 if (program.account) {
-	account_id_p = Promise.resolve(program.account)
+	account_id_p = Promise.resolve({account_id: program.account})
 } else if (program.username) {
-	account_id_p = findAccount(program.username).then(player => player.account_id)
+	account_id_p = findAccount(program.username)
 } else {
-	account_id_p = session.load().then(sess => sess.account_id)
+	account_id_p = session.load()
 }
 
-account_id_p.then(account_id => {
+account_id_p.then(({account_id}) => {
 	return wotblitz.tanks.stats(account_id, null, null, null, ['last_battle_time', 'tank_id']).then(stats => stats[account_id])
 }).then(stats => {
 	var recent = stats.sort((a, b) => b.last_battle_time - a.last_battle_time).slice(0, program.count)

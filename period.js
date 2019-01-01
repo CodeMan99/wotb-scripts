@@ -25,19 +25,16 @@ var writeFile = util.promisify(fs.writeFile)
 
 var sess_p = session.load()
 var account_id_p = null
-var updateSessionAccountId = false
 
 if (program.account) {
-	updateSessionAccountId = true
-	account_id_p = Promise.resolve(program.account)
+	account_id_p = Promise.resolve({account_id: program.account})
 } else if (program.username) {
-	updateSessionAccountId = true
-	account_id_p = findAccount(program.username).then(player => player.account_id)
+	account_id_p = findAccount(program.username)
 } else {
-	account_id_p = sess_p.then(sess => sess.account_id)
+	account_id_p = sess_p
 }
 
-var currentStats_p = account_id_p.then(account_id => wotblitz.tanks.stats(account_id, null, null, null, [
+var currentStats_p = account_id_p.then(({account_id}) => wotblitz.tanks.stats(account_id, null, null, null, [
 	'all.battles',
 	'all.losses',
 	'all.wins',
@@ -49,8 +46,8 @@ if (program.start) {
 	var writeStats_p = currentStats_p.then(stats => writeFile(file, JSON.stringify(stats), 'utf8'))
 	var updateSession_p = null
 
-	if (updateSessionAccountId) {
-		updateSession_p = Promise.all([account_id_p, sess_p]).then(([account_id, sess]) => {
+	if (account_id_p !== sess_p) {
+		updateSession_p = Promise.all([account_id_p, sess_p]).then(([{account_id}, sess]) => {
 			sess.account_id = account_id
 			return sess.save()
 		})
@@ -66,8 +63,9 @@ if (program.start) {
 		wotblitz.encyclopedia.vehicles(null, null, fields).then(vehicles => missing(vehicles, fields)),
 		readFile(file, 'utf8').then(data => JSON.parse(data)),
 		currentStats_p,
+		// always `sess_p` here - using the `account_id_p` name for clarity
 		account_id_p
-	]).then(([vehicles, _previousStats, _currentStats, account_id]) => {
+	]).then(([vehicles, _previousStats, _currentStats, {account_id}]) => {
 		var previousStats = _previousStats[account_id]
 		var currentStats = _currentStats[account_id]
 

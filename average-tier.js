@@ -25,14 +25,14 @@ if (program.onlyPremium && program.onlyRegular) {
 var account_id_p = null
 
 if (program.account) {
-	account_id_p = Promise.resolve(program.account)
+	account_id_p = Promise.resolve({account_id: program.account})
 } else if (program.username) {
-	account_id_p = findAccount(program.username).then(player => player.account_id)
+	account_id_p = findAccount(program.username)
 } else {
-	account_id_p = session.load().then(sess => sess.account_id)
+	account_id_p = session.load()
 }
 
-account_id_p.then(account_id => {
+account_id_p.then(({account_id}) => {
 	var fields = ['is_premium', 'tier']
 
 	return Promise.all([
