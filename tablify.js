@@ -80,7 +80,7 @@ WriteTableStream.prototype._final = function(done) {
 					row = rowify(chunk.value, {
 						columns: rowKeys,
 						custom: {
-							name: chunk.key,
+							name: winRateColor(chunk.value)(chunk.key),
 							percentage: percentage(chunk.value)
 						}
 					});
@@ -135,4 +135,17 @@ function rowify(obj, options) {
 
 function percentage({wins, battles}, decimals=2) {
 	return (wins / battles * 100).toFixed(decimals) + '%';
+}
+
+function winRateColor({wins, battles}) {
+	const p = wins / battles;
+
+	let color = 35;
+
+	if (p < 0.36333) { color = 31; } else
+	if (p < 0.49999) { color = 33; } else
+	if (p < 0.66666) { color = 32; } else
+	if (p < 0.74999) { color = 34; }
+
+	return s => `\u001b[${color}m${s}\u001b[0m`;
 }
