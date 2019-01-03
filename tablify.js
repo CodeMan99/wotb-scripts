@@ -42,6 +42,23 @@ WriteTableStream.prototype._final = function(done) {
 };
 
 {
+	const onerror = (message=false, stack=true) => {
+		return function(err) {
+			if (message && err.message) {
+				console.error(err.message);
+			}
+
+			if (stack && err.stack) {
+				console.error(err.stack);
+			}
+
+			if (!(err instanceof Error)) {
+				console.error(err);
+			}
+
+			this.end();
+		};
+	};
 	let headerRow = ['WR %', 'W', 'L', 'B', 'Name'];
 	let rowKeys = ['percentage', 'wins', 'losses', 'battles', 'name'];
 	let options = {
@@ -63,6 +80,7 @@ WriteTableStream.prototype._final = function(done) {
 
 	process.stdin
 		.pipe(new Parser())
+		.once('error', onerror())
 		.pipe(new StreamObject({
 			objectFilter({current}) {
 				if (current && 'battles' in current) {
@@ -70,6 +88,7 @@ WriteTableStream.prototype._final = function(done) {
 				}
 			}
 		}))
+		.once('error', onerror())
 		.pipe(new Transform({
 			objectMode: true,
 			transform(chunk, enc, next) {
@@ -99,7 +118,9 @@ WriteTableStream.prototype._final = function(done) {
 				next(err, row);
 			}
 		}))
-		.pipe(new WriteTableStream(options));
+		.once('error', onerror())
+		.pipe(new WriteTableStream(options))
+		.once('error', onerror(true, false));
 }
 
 /**
