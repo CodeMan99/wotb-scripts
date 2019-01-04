@@ -5,17 +5,18 @@ var logger = require('./lib/logger.js').setOptions({depth: 3})
   , session = require('./lib/session.js')
   , wotblitz = require('wotblitz')()
 
-var fields = ['name', 'nation', 'tier']
+session.load().then(sess => {
+	if (!sess.isLoggedIn()) throw new Error('tank-frags: session is not logged in')
 
-Promise.all([
-	session.load().then(sess => {
-		if (!sess.isLoggedIn()) throw new Error('tank-frags: session is not logged in')
+	var fields = ['name', 'nation', 'tier']
 
-		return wotblitz.tanks.stats(sess.account_id, sess.token, null, null, ['frags', 'tank_id'])
-			.then(stats => stats[sess.account_id])
-	}),
-	wotblitz.encyclopedia.vehicles(null, null, fields).then(vehicles => missing(vehicles, fields))
-]).then(([stats, vehicles]) => {
+	return Promise.all([
+		wotblitz.tanks.stats(sess.account_id, sess.token, null, null, ['frags', 'tank_id'])
+			.then(stats => stats[sess.account_id]),
+		wotblitz.encyclopedia.vehicles(null, null, fields)
+			.then(vehicles => missing(vehicles, fields))
+	])
+}).then(([stats, vehicles]) => {
 	return stats
 		.map(tank => ({
 			name: vehicles[tank.tank_id].name,
